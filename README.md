@@ -20,5 +20,5 @@ https://www.simplilearn.com/learn-blockchain-basics-skillup?utm_source=frs&utm_m
 *C++ Development Resources
 https://youtube.com/playlist?list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb  
 
-*Networking Resources 
+*Networking Resources  
 Simple Architechture ? https://miro.medium.com/max/389/1*BMc5ZcrrH1IRtAx1dOG7DQ.png
