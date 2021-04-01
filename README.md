@@ -17,7 +17,7 @@ https://levelup.gitconnected.com/creating-a-blockchain-from-scratch-9a7b123e1f3e
 https://medium.com/@lhartikk/a-blockchain-in-200-lines-of-code-963cc1cc0e54  
 https://www.simplilearn.com/learn-blockchain-basics-skillup?utm_source=frs&utm_medium=freemium_course_exit_intent_popup&utm_campaign=frs-tutorial-skillup-course-promotion&referrer=https://www.simplilearn.com/tutorials/blockchain-tutorial  
 
-*C++ Development Resources
+*C++ Development Resources  
 https://youtube.com/playlist?list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb  
 
 *Networking Resources  
