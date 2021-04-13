@@ -1,0 +1,5 @@
+[voters]
+  [voters.1]
+  id = "1"
+  name = "Ali Eren Demireller"
+  voted = ""

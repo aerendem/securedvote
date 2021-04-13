@@ -1,0 +1,15 @@
+[candidates]
+  [candidates.1]
+  id = "1"
+  name = "Tansu Çiller"
+  slogan = "İşsizin isazı işsasız"
+
+  [candidates.2]
+  id = "2"
+  name = "Süleyman Demirel"
+  slogan = "Bize plan değil pilav lazım"
+
+  [candidates.3]
+  id = "3"
+  name = "Besim Tibuk"
+  slogan = "Bu ofsaytıda kaldırmak lazım"

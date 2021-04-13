@@ -1,0 +1,1 @@
+//to act as a decentralized app in p2p network will be used to communicate with other dApps through libp2p 
