@@ -2465,6 +2465,7 @@ name = "securedvote"
 version = "0.0.1"
 dependencies = [
  "crypto-hash",
+ "hex 0.3.2",
  "hyper",
  "json",
  "libp2p",

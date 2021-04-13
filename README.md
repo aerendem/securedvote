@@ -9,7 +9,13 @@ Writing in Rust 🦀 from scratch!
 
 **Library Dependencies;** -
 
+### How to run
 
+Run this piece of code in your terminal and locate target\release\securedvote.exe run
+```rust
+cargo build --release
+
+```
 ### Blockchain Development Resources  
 * https://bitcoin.org/bitcoin.pdf  
 * https://www.guru99.com/blockchain-tutorial.html  
