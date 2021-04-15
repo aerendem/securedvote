@@ -1,20 +1,20 @@
 use std::fmt::{ self, Debug, Formatter };
 use super::*;
 
-pub struct Block {
-    pub index: u32, //Index of block
-    pub timestamp: u128, //The time when block created
+pub struct Ballot {
+    pub index: u32, //Index of ballot
+    pub timestamp: u128, //The time when ballot created
     pub hash: Hash, //Hashing is the process of taking the input string of any length and turning it into cryptographic fixed output
-    pub prev_block_hash: Hash, //hash of previous block that currrent block chained onto
+    pub prev_block_hash: Hash, //hash of previous ballot that currrent ballot chained onto
     pub nonce: u64, //it is a number added to a hashed—or encrypted—block
     pub voted_candidate_id: u32, //Using 32-bit integer to hold integers more then 0
     pub voter_id: u32, //the id of voter, this field will be checked in voting process aswell
     pub difficulty: u128, //difficulty of hash
 }
 
-impl Debug for Block {
+impl Debug for Ballot {
     fn fmt (&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "Vote Block[{}]: {} created at: {} voted for: {} voted by: {} nonce: {}",
+        write!(f, "Vote Ballot[{}]: {} created at: {} voted for: {} voted by: {} nonce: {}",
             &self.index,
             &hex::encode(&self.hash),
             &self.timestamp,
@@ -25,9 +25,9 @@ impl Debug for Block {
     }
 }
 
-impl Block {
+impl Ballot {
     pub fn new (index: u32, timestamp: u128, prev_block_hash: Hash, voted_candidate_id: u32, voter_id: u32, difficulty: u128) -> Self {
-        Block {
+        Ballot {
             index,  
             timestamp, 
             hash: vec![0; 32],
@@ -52,7 +52,7 @@ impl Block {
     }
 }
 
-impl Hashable for Block {
+impl Hashable for Ballot {
     fn bytes (&self) -> Vec<u8> {
         let mut bytes = vec![];
 

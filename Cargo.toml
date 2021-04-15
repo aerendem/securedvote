@@ -9,7 +9,7 @@ name = "blockchainlib"
 path = "src/lib.rs"
 
 [[bin]]
-name = "blockchain"
+name = "ballotchain"
 path = "src/main.rs"
 
 [dependencies]

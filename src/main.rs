@@ -11,27 +11,27 @@ fn main () {
     //difficulty of hash
     let difficulty = 0x000fffffffffffffffffffffffffffff;
 
-    let mut genesis_block = Block::new(0, now(), vec![0; 32], 0,362, difficulty);
+    let mut genesis_block = Ballot::new(0, now(), vec![0; 32], 0,362, difficulty);
 
     genesis_block.vote(0);
 
-    println!("Voted(mined) genesis block {:?}", &genesis_block);
+    println!("Voted(mined) genesis ballot {:?}", &genesis_block);
 
     let mut last_hash = genesis_block.hash.clone();
 
-    let mut blockchain = Blockchain::new();
+    let mut ballotchain = Ballotchain::new();
 
-    blockchain.update_with_block(genesis_block).expect("Failed to add genesis block");
+    ballotchain.update_with_block(genesis_block).expect("Failed to add genesis ballot");
 
-    let mut block = Block::new(1, now(), last_hash, 0,362, difficulty);
-    //just simple run of vote mechanic to "mine" a block and putting 0 as candidateId
-    block.vote(0);
+    let mut ballot = Ballot::new(1, now(), last_hash, 0,362, difficulty);
+    //just simple run of vote mechanic to "mine" a ballot and putting 0 as candidateId
+    ballot.vote(0);
 
-    println!("Voted(mined) with block {:?}", &block);
+    println!("Voted(mined) with ballot {:?}", &ballot);
 
-    last_hash = block.hash.clone(); //to be assigned to new block
+    last_hash = ballot.hash.clone(); //to be assigned to new ballot
 
-    blockchain.update_with_block(block).expect("Failed to add block");
+    ballotchain.update_with_block(ballot).expect("Failed to add ballot");
 
     
     let mut input = String::new();
@@ -39,9 +39,9 @@ fn main () {
     
     match io::stdin().read_line(&mut input) {
         Ok(n) => {
-            let mut block = Block::new(2, now(), last_hash, 0,365, difficulty);
-            block.vote(0);
-            println!("Voted(mined) with block {:?}", &block);
+            let mut ballot = Ballot::new(2, now(), last_hash, 0,365, difficulty);
+            ballot.vote(0);
+            println!("Voted(mined) with ballot {:?}", &ballot);
         }
         Err(error) => println!("error: {}", error),
     }

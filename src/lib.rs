@@ -79,11 +79,11 @@ pub fn difficulty_bytes_as_u128 (v: &Vec<u8>) -> u128 {
     ((v[16] as u128) << 0x0 * 8)
 }
 
-mod block;
-pub use crate::block::Block;
+mod ballot;
+pub use crate::ballot::Ballot;
 mod hashable;
 pub use crate::hashable::Hashable;
-mod blockchain;
-pub use crate::blockchain::Blockchain;
+mod ballotchain;
+pub use crate::ballotchain::Ballotchain;
 /* pub mod transaction;
 pub use crate::transaction::Transaction; */
