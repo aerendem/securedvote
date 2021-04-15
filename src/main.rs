@@ -2,7 +2,7 @@ extern crate timer;
 
 //use std::sync::mpsc::channel; --stuff for lifetime 
 use blockchainlib::*;
-
+use std::io;
 //const lifetime: u128 = 10000; //constant to declare the lifetime of dapp 
 //let voterId: u32; //voterId
 fn main () {
@@ -33,6 +33,18 @@ fn main () {
 
     blockchain.update_with_block(block).expect("Failed to add block");
 
+    
+    let mut input = String::new();
+    println!("Would you like to vote ?");
+    
+    match io::stdin().read_line(&mut input) {
+        Ok(n) => {
+            let mut block = Block::new(2, now(), last_hash, 0,365, difficulty);
+            block.vote(0);
+            println!("Voted(mined) with block {:?}", &block);
+        }
+        Err(error) => println!("error: {}", error),
+    }
     //Lifetime
     /* let timer = timer::Timer::new();
     let (tx, rx) = channel();
