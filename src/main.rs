@@ -45,6 +45,8 @@ fn main () {
         }
         Err(error) => println!("error: {}", error),
     }
+
+    client_init();
     //Lifetime
     /* let timer = timer::Timer::new();
     let (tx, rx) = channel();
