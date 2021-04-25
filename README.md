@@ -30,4 +30,4 @@ cargo build --release
 * https://www.simplilearn.com/learn-ballotchain-basics-skillup?utm_source=frs&utm_medium=freemium_course_exit_intent_popup&utm_campaign=frs-tutorial-skillup-course-promotion&referrer=
 * https://www.simplilearn.com/tutorials/ballotchain-tutorial  
 
-> Marmara Üniversitesi Bilgisayar Programcılığı Bitirme Projesi
+> Maltepe Üniversitesi Bilgisayar Programcılığı Bitirme Projesi
