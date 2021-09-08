@@ -1,17 +1,18 @@
 extern crate timer;
 
-//use std::sync::mpsc::channel; --stuff for lifetime 
-use blockchainlib::*;
+use async_std::task;
+use ballotchainlib::*;
 use std::io;
-//const lifetime: u128 = 10000; //constant to declare the lifetime of dapp 
-//let voterId: u32; //voterId
-fn main () {
-    //Have to create a voterId here and change it if necessary after connecting with other nodes
+use std::thread;
+use winit::event_loop;
 
-    //difficulty of hash
+fn main() {
+    //Have to create a voterId here and change it if necessary after connecting with other nodes
+    //building ui
+    // //difficulty of hash
     let difficulty = 0x000fffffffffffffffffffffffffffff;
 
-    let mut genesis_block = Ballot::new(0, now(), vec![0; 32], 0,362, difficulty);
+    let mut genesis_block = Ballot::new(0, now(), vec![0; 32], 0, 362, difficulty);
 
     genesis_block.vote(0);
 
@@ -21,41 +22,28 @@ fn main () {
 
     let mut ballotchain = Ballotchain::new();
 
-    ballotchain.update_with_block(genesis_block).expect("Failed to add genesis ballot");
+    ballotchain
+        .update_with_block(genesis_block)
+        .expect("Failed to add genesis ballot");
 
-    let mut ballot = Ballot::new(1, now(), last_hash, 0,362, difficulty);
-    //just simple run of vote mechanic to "mine" a ballot and putting 0 as candidateId
-    ballot.vote(0);
+    /* println!("Would you like to vote ?");
+    let mut adayatakan = Candidate::new(String::from("Atakan"), 1, 31);
 
-    println!("Voted(mined) with ballot {:?}", &ballot);
-
-    last_hash = ballot.hash.clone(); //to be assigned to new ballot
-
-    ballotchain.update_with_block(ballot).expect("Failed to add ballot");
+    Candidate::write_candidate_vote(&mut adayatakan); */
 
     
-    let mut input = String::new();
-    println!("Would you like to vote ?");
-    
-    match io::stdin().read_line(&mut input) {
-        Ok(n) => {
-            let mut ballot = Ballot::new(2, now(), last_hash, 0,365, difficulty);
-            ballot.vote(0);
-            println!("Voted(mined) with ballot {:?}", &ballot);
-        }
-        Err(error) => println!("error: {}", error),
-    }
 
-    client_init();
-    //Lifetime
-    /* let timer = timer::Timer::new();
-    let (tx, rx) = channel();
+    task::block_on(async {
+         //Ballotchain::init_network();
+         let appp = SecVApp::default();
+         let native_options = eframe::NativeOptions::default();
+         eframe::run_native(Box::new(appp), native_options);
 
-    timer.schedule_with_delay(chrono::Duration::seconds(3), move || {
-        tx.send(()).unwrap();
+         SecVApp::change_last_hash(last_hash);
     });
 
-    rx.recv().unwrap();
+    task::block_on(async {
+        Ballotchain::init_network(&ballotchain);
+    });
 
-    std::process::exit() //exiting right here */
 }

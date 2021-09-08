@@ -83,7 +83,13 @@ mod ballot;
 pub use crate::ballot::Ballot;
 mod hashable;
 pub use crate::hashable::Hashable;
+
 mod ballotchain;
 pub use crate::ballotchain::Ballotchain;
-pub mod client;
-pub use crate::client::client_init;
+
+mod candidates;
+pub use candidates::Candidate;
+
+mod app;
+pub use app::SecVApp;
+

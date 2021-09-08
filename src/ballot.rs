@@ -50,14 +50,6 @@ impl Ballot {
             }
         }
     }
-
-    pub fn candidate_check(candidateId: u32)  {
-        
-    }
-
-    pub fn voted_check(voterId: u32) { 
-        
-    }
 }
 
 impl Hashable for Ballot {
