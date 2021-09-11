@@ -90,6 +90,4 @@ pub use crate::ballotchain::Ballotchain;
 mod candidates;
 pub use candidates::Candidate;
 
-mod app;
-pub use app::SecVApp;
 

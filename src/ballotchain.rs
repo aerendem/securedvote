@@ -40,16 +40,15 @@ pub struct Ballotchain {
     pub pending_votes: Vec<Ballot>,
 
     //put reference to network manager here
-    pub kademlia: Kademlia<MemoryStore>,
+    //pub kademlia: Kademlia<MemoryStore>,
 }
 
 impl Ballotchain {
     pub fn new() -> Self {
-        let mut kademlia;
         Ballotchain {
             ballots: vec![],
             pending_votes: vec![],
-            kademlia,
+            //kademlia,
         }
     }
 
@@ -80,11 +79,26 @@ impl Ballotchain {
         Ok(())
     }
     
-    pub fn handle_input_line(kademlia: &mut Kademlia<MemoryStore>, line: String) {
-        let mut args = line.split(' ');
+    pub fn handle_input_line(&mut self, kademlia: &mut Kademlia<MemoryStore>, line: String, last_hash: &Vec<u8>) {
+        let mut lineS = &line.clone();
+        let mut lineK = &line.clone();
+        let mut args = lineS.split(' ');
+        println!("{}", lineS);
+        println!("{}", lineK);
+        let mut second_args = lineK.split(' ');
+        second_args.next();
 
+        println!("{}", lineS);
+        println!("{}", lineK);
+        let mut aKey;// = second_args.take(0).collect::<Vec<_>>();
+        
+        let mut newKey;//: u32 = aKey.pop().unwrap().parse().unwrap();
+        
+        let mut value = args.next();
+
+        let difficulty = 0x000fffffffffffffffffffffffffffff;
         match args.next() {
-            Some("GET") => {
+            Some("OY_GOSTER") => {
                 let key = {
                     match args.next() {
                         Some(key) => Key::new(&key),
@@ -94,9 +108,13 @@ impl Ballotchain {
                         }
                     }
                 };
+                second_args.next();
+                aKey = second_args.take(0).collect::<Vec<_>>();
+                newKey = aKey.pop().unwrap().parse().unwrap();
+                println!("newKey {:?}", newKey);
                 kademlia.get_record(&key, Quorum::One);
             }
-            Some("GET_PROVIDERS") => {
+            Some("OY_VER") => {
                 let key = {
                     match args.next() {
                         Some(key) => Key::new(&key),
@@ -106,65 +124,42 @@ impl Ballotchain {
                         }
                     }
                 };
-                kademlia.get_providers(key);
-            }
-            Some("PUT") => {
-                let key = {
-                    match args.next() {
-                        Some(key) => Key::new(&key),
-                        None => {
-                            eprintln!("Expected key");
-                            return;
-                        }
-                    }
-                };
-                let value = {
-                    match args.next() {
-                        Some(value) => value.as_bytes().to_vec(),
-                        None => {
-                            eprintln!("Expected value");
-                            return;
-                        }
-                    }
-                };
+                second_args.next();
+                aKey = second_args.take(0).collect::<Vec<_>>();
+                newKey = aKey.pop().unwrap().parse().unwrap();
+                println!("newKey {:?}", newKey);
+                let mut ballot = Ballot::new(1, now(), (&last_hash).to_vec(), 0 ,362, difficulty);
+                //just simple run of vote mechanic to "mine" a ballot and putting 0 as candidateId
+                ballot.vote(newKey);
+                let value = ballot.hash.clone();
+                println!("Voted(mined) with ballot {:?}", &ballot);
                 let record = Record {
                     key,
-                    value,
+                    value: ballot.hash.clone() ,
                     publisher: None,
                     expires: None,
                 };
+
+                //last_hash = &last_hash.clone(); //to be assigned to new ballot
+                self.update_with_block(ballot).expect("Failed to add ballot");
+               
                 kademlia
                     .put_record(record, Quorum::One)
                     .expect("Failed to store record locally.");
             }
-            Some("PUT_PROVIDER") => {
-                let key = {
-                    match args.next() {
-                        Some(key) => Key::new(&key),
-                        None => {
-                            eprintln!("Expected key");
-                            return;
-                        }
-                    }
-                };
-
-                kademlia
-                    .start_providing(key)
-                    .expect("Failed to start providing key");
-            }
             _ => {
-                eprintln!("expected GET, GET_PROVIDERS, PUT or PUT_PROVIDER");
+                eprintln!("OY_GOSTER ya da OY_VER komutu beklenildi ");
             }
         }
     }
-    pub fn init_network(&mut self) -> Result<(), Box<dyn Error>> {
+   
+    pub fn init_network(&mut self,  last_hash: &Vec<u8>) -> Result<(), Box<dyn Error>> {
         task::block_on(async {
             env_logger::init();
 
             // Create a random key for ourselves.
             let local_key = identity::Keypair::generate_ed25519();
             let local_peer_id = PeerId::from(local_key.public());
-            let _connectionCount: usize;
             // Set up a an encrypted DNS-enabled TCP Transport over the Mplex protocol.
 
             // this is std::fs, which blocks
@@ -222,6 +217,7 @@ impl Ballotchain {
                                 eprintln!("Failed to get record: {:?}", err);
                             }
                             QueryResult::PutRecord(Ok(PutRecordOk { key })) => {
+                                //Create ballot here
                                 println!(
                                     "Successfully put record {:?}",
                                     std::str::from_utf8(key.as_ref()).unwrap()
@@ -245,12 +241,12 @@ impl Ballotchain {
                     }
                 }
             }
-            let mut kademlia = self.kademlia;
+           
             // Create a swarm to manage peers and events.
             let mut swarm = {
                 // Create a Kademlia behaviour.
                 let store = MemoryStore::new(local_peer_id.clone());
-                kademlia = Kademlia::new(local_peer_id.clone(), store);
+                let kademlia = Kademlia::new(local_peer_id.clone(), store);
                 let mdns = task::block_on(Mdns::new(MdnsConfig::default()))?;
                 let behaviour = MyBehaviour { kademlia, mdns };
                 Swarm::new(transport, behaviour, local_peer_id)
@@ -270,7 +266,7 @@ impl Ballotchain {
                 loop {
                     match stdin.try_poll_next_unpin(cx)? {
                         Poll::Ready(Some(line)) => {
-                            Ballotchain::handle_input_line(&mut swarm.behaviour_mut().kademlia, line)
+                            Ballotchain::handle_input_line(self, &mut swarm.behaviour_mut().kademlia, line, last_hash)
                         }
                         Poll::Ready(None) => panic!("Stdin closed"),
                         Poll::Pending => break,
@@ -292,12 +288,7 @@ impl Ballotchain {
         })
     }
     
-    pub fn put_vote_for_candidate(candidateId: i32) {
-        let &(mut kademlia) = self.kademlia;
-        let mut record = &kademlia.get_record(&candidateId, Quorum::One);
-        record.value += 1;
-        kademlia
-            .put_record(record, Quorum::One)
-            .expect("Failed to store record locally.");
+    pub fn publish_ballot(ballot: Ballot) -> Result<()> {
+      
     }
 }

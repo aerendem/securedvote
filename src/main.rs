@@ -2,9 +2,6 @@ extern crate timer;
 
 use async_std::task;
 use ballotchainlib::*;
-use std::io;
-use std::thread;
-use winit::event_loop;
 
 fn main() {
     //Have to create a voterId here and change it if necessary after connecting with other nodes
@@ -18,32 +15,15 @@ fn main() {
 
     println!("Voted(mined) genesis ballot {:?}", &genesis_block);
 
-    let mut last_hash = genesis_block.hash.clone();
-
     let mut ballotchain = Ballotchain::new();
 
+    let mut last_hash: Vec<u8> = genesis_block.hash.clone();
+    
     ballotchain
         .update_with_block(genesis_block)
         .expect("Failed to add genesis ballot");
 
-    /* println!("Would you like to vote ?");
-    let mut adayatakan = Candidate::new(String::from("Atakan"), 1, 31);
-
-    Candidate::write_candidate_vote(&mut adayatakan); */
-
-    
-
     task::block_on(async {
-         //Ballotchain::init_network();
-         let appp = SecVApp::default();
-         let native_options = eframe::NativeOptions::default();
-         eframe::run_native(Box::new(appp), native_options);
-
-         SecVApp::change_last_hash(last_hash);
+        Ballotchain::init_network(&mut ballotchain, &last_hash);
     });
-
-    task::block_on(async {
-        Ballotchain::init_network(&ballotchain);
-    });
-
 }
