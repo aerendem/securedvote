@@ -1,6 +1,8 @@
-use std::fmt::{ self, Debug, Formatter };
+use std::{fmt::{ self, Debug, Formatter }};
+use serde::{Serialize, Deserialize};
 use super::*;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Ballot {
     pub index: u32, //Index of ballot
     pub timestamp: u128, //The time when ballot created
@@ -39,10 +41,14 @@ impl Ballot {
         }
     }
 
+    /* pub fn add_hash(&mut self, voted_candidate_id: Vec<u8>) {
+        self.has
+    } */
     pub fn vote (&mut self, voted_candidate_id: u32) {
         for nonce_attempt in 0..(u64::max_value()) {
             self.nonce = nonce_attempt;
             let hash = self.hash();
+
             if check_difficulty(&hash, self.difficulty) {
                 self.hash = hash;
                 self.voted_candidate_id = voted_candidate_id;
@@ -50,6 +56,7 @@ impl Ballot {
             }
         }
     }
+
 }
 
 impl Hashable for Ballot {

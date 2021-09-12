@@ -81,6 +81,7 @@ pub fn difficulty_bytes_as_u128 (v: &Vec<u8>) -> u128 {
 
 mod ballot;
 pub use crate::ballot::Ballot;
+
 mod hashable;
 pub use crate::hashable::Hashable;
 
