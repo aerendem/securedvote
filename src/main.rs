@@ -14,7 +14,7 @@ fn main() {
     
     let ikinci_aday = Candidate::new("Ahmet Seçilmez".to_string(), 2, 0);
 
-    let ucuncu_aday = Candidate::new("Veli Katılmamış".to_string(), 2, 0);
+    let ucuncu_aday = Candidate::new("Veli Katılmamış".to_string(), 3, 0);
 
     candidatelist.add_candidate(birinci_aday);
     candidatelist.add_candidate(ikinci_aday);
