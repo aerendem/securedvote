@@ -1,5 +1,8 @@
+use crate::candidates::Candidates;
+
 use super::*;
 use async_std::{io, task};
+use candidate::*;
 use env_logger::{Builder, Env};
 use futures::prelude::*;
 use libp2p::gossipsub::MessageId;
@@ -19,6 +22,7 @@ use std::{
 };
 
 #[derive(Debug)]
+
 pub enum BlockValidationErr {
     MismatchedIndex,
     InvalidHash,
@@ -32,20 +36,11 @@ pub enum BlockValidationErr {
 pub struct Ballotchain {
     ///Stores all the ballots(blocks) which are accepted as votes
     pub ballots: Vec<Ballot>,
-
-    ///Stores votes which are not accepted yet
-    pub pending_votes: Vec<Ballot>,
-    //put reference to network manager here
-    //pub kademlia: Kademlia<MemoryStore>,
 }
 
 impl Ballotchain {
     pub fn new() -> Self {
-        Ballotchain {
-            ballots: vec![],
-            pending_votes: vec![],
-            //kademlia,
-        }
+        Ballotchain { ballots: vec![] }
     }
 
     pub fn update_with_block(&mut self, ballot: Ballot) -> Result<(), BlockValidationErr> {
@@ -60,13 +55,14 @@ impl Ballotchain {
             let prev_block = &self.ballots[i - 1];
             if ballot.timestamp <= prev_block.timestamp {
                 return Err(BlockValidationErr::AchronologicalTimestamp);
-            } else if ballot.prev_block_hash != prev_block.hash && ballot.prev_block_hash == vec![0;32] {
+            } else if ballot.prev_block_hash != prev_block.hash
+                && ballot.prev_block_hash == vec![0; 32]
+            {
                 return Err(BlockValidationErr::MismatchedPreviousHash);
             }
         } else {
             // Genesis ballot
-            if ballot.prev_block_hash != vec![0;32]
-            {
+            if ballot.prev_block_hash != vec![0; 32] {
                 return Err(BlockValidationErr::InvalidGenesisBlockFormat);
             }
         }
@@ -76,22 +72,23 @@ impl Ballotchain {
         Ok(())
     }
 
-    pub fn init_network(&mut self /* , last_hash: &Vec<u8> */) -> Result<(), Box<dyn Error>> {
+    pub fn init_network(&mut self, candidatelist: &mut Candidates) -> Result<(), Box<dyn Error>> {
         task::block_on(async {
             let difficulty = 0x000fffffffffffffffffffffffffffff;
 
-            let predefined_hash: Vec<u8> = vec![0;32];
+            let predefined_hash: Vec<u8> = vec![0; 32];
             let mut genesis_block = Ballot::new(0, now(), predefined_hash, 0, 362, difficulty);
 
             genesis_block.vote(0);
             println!("genesis_block {:?}", genesis_block.hash.clone());
-            println!("Voted(mined) genesis ballot {:?}", &genesis_block);
+            println!(
+                "Genesis(baslangic) pusulası oylandı(kazıldı) {:?}",
+                &genesis_block
+            );
             let mut last_hash = genesis_block.hash.clone();
-            //let mut last_hash: Vec<u8> = genesis_block.hash.clone().hash();
-            //let mut last_hash: Vec<u8> = Hashable.hash(genesis_block.hash.clone()).clone();
 
             self.update_with_block(genesis_block)
-                .expect("Failed to add genesis ballot");
+                .expect("Genesis(baslangic) pusulası eklenmsi başarısız oldu");
 
             Builder::from_env(Env::default().default_filter_or("info")).init();
 
@@ -152,7 +149,7 @@ impl Ballotchain {
                 .listen_on("/ip4/0.0.0.0/tcp/0".parse().unwrap())
                 .unwrap();
 
-            // Reach out to another node if specified
+            // Reach out to another node
             if let Some(to_dial) = std::env::args().nth(1) {
                 let dialing = to_dial.clone();
                 match to_dial.parse() {
@@ -162,19 +159,18 @@ impl Ballotchain {
                             let mut entry_message = String::new();
                             entry_message = "ILK_BAGLANTI".to_string();
 
-
                             let message_id_fn = |message: &GossipsubMessage| {
                                 let mut s = DefaultHasher::new();
                                 message.data.hash(&mut s);
                                 MessageId::from(s.finish().to_string())
                             };
                             let gossipsub_config = gossipsub::GossipsubConfigBuilder::default()
-                            .heartbeat_interval(Duration::from_secs(10)) // This is set to aid debugging by not cluttering the log space
-                            .validation_mode(ValidationMode::Strict) // This sets the kind of message validation. The default is Strict (enforce message signing)
-                            .message_id_fn(message_id_fn) // content-address messages. No two messages of the
-                            // same content will be propagated.
-                            .build()
-                            .expect("Valid config");
+                                .heartbeat_interval(Duration::from_secs(10)) // This is set to aid debugging by not cluttering the log space
+                                .validation_mode(ValidationMode::Strict) // This sets the kind of message validation. The default is Strict (enforce message signing)
+                                .message_id_fn(message_id_fn) // content-address messages. No two messages of the
+                                // same content will be propagated.
+                                .build()
+                                .expect("Valid config");
                             let test_topic = Topic::new("ILK_BAGLANTI-net");
                             let mut gossipsub: gossipsub::Gossipsub = gossipsub::Gossipsub::new(
                                 MessageAuthenticity::Signed(duplicate_local_key),
@@ -187,7 +183,7 @@ impl Ballotchain {
                                 .behaviour_mut()
                                 .publish(topic.clone(), entry_message.as_bytes());
                         }
-                        
+
                         Err(e) => println!("Dial {:?} failed: {:?}", dialing, e),
                     },
                     Err(err) => println!("Failed to parse address to dial: {:?}", err),
@@ -197,7 +193,7 @@ impl Ballotchain {
             // Read full lines from stdin
             let mut stdin = io::BufReader::new(io::stdin()).lines();
 
-            // Kick it off
+            // Start network async task(multi-threading)
             task::block_on(future::poll_fn(move |cx: &mut Context<'_>| {
                 loop {
                     match stdin.try_poll_next_unpin(cx)? {
@@ -205,52 +201,95 @@ impl Ballotchain {
                             let mut line = &line.clone();
                             let mut args = line.split_whitespace();
                             match args.next() {
-                                Some("OY_GOSTER") => {
-                                    let string_of_slice: String = args.next().unwrap().to_string();
-                                    println!("{:?}", string_of_slice);
-                                    let key: u32 = string_of_slice.parse::<u32>().unwrap();
-                                    println!("{:?}", key);
-
-                                    let mut vote_count: u32 = 0;
-                                    for ballot in self.ballots.iter() {
-                                        if ballot.voted_candidate_id == key {
-                                            vote_count += 1;
+                                Some("ADAY_OYUNU_GOSTER") => {
+                                    let mut found_candidate: bool = false;
+                                    let id = args.next().unwrap();
+                                    for candidate in candidatelist.candidates.iter() {
+                                        if candidate.candidate_id == id.parse::<u32>().unwrap() {
+                                            found_candidate = true
                                         }
                                     }
-                                    println!("{:?}", vote_count);
+                                    if found_candidate == true {
+                                        let mut vote_count: u32 = 0;
+                                        for ballot in self.ballots.iter() {
+                                            if ballot.voted_candidate_id == id.parse::<u32>().unwrap() {
+                                                vote_count += 1;
+                                            }
+                                        }
+                                        println!("{:?}", vote_count);
+                                    } else {
+                                        println!("Aday bulunamadi");
+                                    }
+                                }
+                                Some("ADAY_BILGI_GOSTER") => {
+                                    let id = args.next().unwrap();
+                                    let mut found_candidate: bool = false;
+                                    for candidate in candidatelist.candidates.iter() {
+                                        if candidate.candidate_id == id.parse::<u32>().unwrap() {
+                                            found_candidate = true;
+                                            println!("{:?}", &candidate);
+                                        }
+                                    }
+                                    if found_candidate == true {
+                                    } else {
+                                        println!("Aday bulunamadi");
+                                    }
+                                }
+                                Some("BUTUN_ADAYLARI_GOSTER") => {
+                                    for candidate in candidatelist.candidates.iter() {
+                                        println!("{:?}", &candidate);
+                                    }
                                 }
                                 Some("OY_VER") => {
-                                    let key = args.next().unwrap();
-                                    let new_index: u32 = self.ballots.len().try_into().unwrap();
-                                    println!("key {:?}", key);
-                                    let mut ballot: Ballot = Ballot::new(
-                                        new_index,
-                                        now(),
-                                        last_hash.clone(),
-                                        0,
-                                        123,
-                                        difficulty,
-                                    );
+                                    let id = args.next().unwrap();
 
-                                    //just simple run of vote mechanic to "mine" a ballot and putting 0 as candidateId
-                                    ballot.vote(key.parse::<u32>().unwrap());
-                                    last_hash = ballot.hash.clone();
-                                    println!("Voted(mined) with ballot {:?}", &ballot);
+                                    let mut found_candidate: bool = false;
+                                    for candidate in candidatelist.candidates.iter() {
+                                        if candidate.candidate_id == id.parse::<u32>().unwrap() {
+                                            found_candidate = true
+                                        }
+                                    }
 
-                                    let mut clonedBallot = ballot.clone();
+                                    if found_candidate == true {
+                                        let new_index: u32 = self.ballots.len().try_into().unwrap();
+                                        println!("key {:?}", id);
+                                        let mut ballot: Ballot = Ballot::new(
+                                            new_index,
+                                            now(),
+                                            last_hash.clone(),
+                                            0,
+                                            123,
+                                            difficulty,
+                                        );
 
-                                    //UPDATE LAST HASH HERE
+                                        //just simple run of vote mechanic to "mine" a ballot and putting key provided as candidate_id
+                                        ballot.vote(id.parse::<u32>().unwrap());
 
-                                    self.update_with_block(ballot)
-                                        .expect("Failed to add ballot");
+                                        last_hash = ballot.hash.clone();
+                                        println!("Pusula ile oylandı(kazıldı/mine): {:?}", &ballot);
 
-                                    let json = serde_json::to_string(&clonedBallot)
-                                        .expect("can jsonify request");
-                                    swarm
-                                        .behaviour_mut()
-                                        .publish(topic.clone(), json.as_bytes());
+                                        let cloned_ballot = ballot.clone();
+
+                                        self.update_with_block(ballot)
+                                            .expect("Pusula eklenmesi basarisiz");
+
+                                        for candidate in candidatelist.candidates.iter_mut() {
+                                            if candidate.candidate_id == id.parse::<u32>().unwrap()
+                                            {
+                                                candidate.vote_count += 1;
+                                            }
+                                        }
+                                        let json = serde_json::to_string(&cloned_ballot)
+                                            .expect("can jsonify request");
+                                        swarm
+                                            .behaviour_mut()
+                                            .publish(topic.clone(), json.as_bytes());
+                                    }
                                 }
-                                /* Some("ILK_BAGLANTI") => {
+                                Some("ILK_BAGLANTI_KUR") => {
+
+                                }
+                                Some("ILK_BAGLANTI_BILGI_GONDER") => {
                                     let message_id_fn = |message: &GossipsubMessage| {
                                         let mut s = DefaultHasher::new();
                                         message.data.hash(&mut s);
@@ -272,21 +311,26 @@ impl Ballotchain {
                                     .expect("Correct configuration");
                                     gossipsub.subscribe(&test_topic).unwrap();
                                     
-                                    let json = serde_json::to_string(&self.ballots)
-                                        .expect("can jsonify request");
-                                    swarm
-                                        .behaviour_mut()
-                                        .publish(topic.clone(), json.as_bytes());
-
                                     
-                                } */
-                                None => eprintln!("olmadı"),
+
+                                    for ballot in self.ballots.iter() {
+                                        let json = serde_json::to_string(ballot)
+                                        .expect("can jsonify request");
+
+                                        swarm
+                                        .behaviour_mut()
+                                        .publish(test_topic.clone(), json.as_bytes());
+                                    }
+                                    
+                                    
+                                }
+                                None => eprintln!("_"),
                                 _ => {
-                                    eprintln!("OY_GOSTER ya da OY_VER komutu beklenildi ");
+                                    eprintln!("Komut beklenildi ");
                                 }
                             }
                         }
-                        Poll::Ready(None) => panic!("Stdin closed"),
+                        Poll::Ready(None) => panic!("Input girişi kapatıldı"),
                         Poll::Pending => break,
                     }
                     {
@@ -303,7 +347,8 @@ impl Ballotchain {
                                 message,
                             }) => {
                                 println!(
-                                    "Got message: {} with id: {} from peer: {:?}",
+                                    "Mesaj alındı: {}, id'ye sahip: {}, istemci tarafından: {:?}",
+                                    //"Got message: {} with id: {} from peer: {:?}",
                                     String::from_utf8_lossy(&message.data),
                                     id,
                                     peer_id
@@ -312,12 +357,20 @@ impl Ballotchain {
                                 let received_ballot: Ballot =
                                     serde_json::from_str(&String::from_utf8_lossy(&message.data))
                                         .unwrap();
+
+                                for candidate in candidatelist.candidates.iter_mut() {
+                                    if candidate.candidate_id == received_ballot.voted_candidate_id
+                                    {
+                                        candidate.vote_count += 1;
+                                    }
+                                }
+
                                 self.update_with_block(received_ballot)
-                                    .expect("Failed to add ballot");
+                                    .expect("Pusula eklenmesi basarisiz");
                             }
 
                             SwarmEvent::NewListenAddr { address, .. } => {
-                                println!("Listening on {:?}", address);
+                                println!("Dinlemeye baslanildi:{:?}", address);
                             }
                             _ => {}
                         },

@@ -8,7 +8,7 @@ pub struct Ballot {
     pub timestamp: u128, //The time when ballot created
     pub hash: Hash, //Hashing is the process of taking the input string of any length and turning it into cryptographic fixed output
     pub prev_block_hash: Hash, //hash of previous ballot that currrent ballot chained onto
-    pub nonce: u64, //it is a number added to a hashed—or encrypted—block
+    pub nonce: u64, //it is a number added to a hashed—or encrypted—block(unique to each block)
     pub voted_candidate_id: u32, //Using 32-bit integer to hold integers more then 0
     pub voter_id: u32, //the id of voter, this field will be checked in voting process aswell
     pub difficulty: u128, //difficulty of hash
@@ -16,7 +16,7 @@ pub struct Ballot {
 
 impl Debug for Ballot {
     fn fmt (&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "Vote Ballot[{}]: {} created at: {} voted for: {} voted by: {} nonce: {}",
+        write!(f, "Oy pusulası[{}]: {} tarih damgası: {} oy verilen: {} tarafından: {} özel nonce numarası: {}",
             &self.index,
             &hex::encode(&self.hash),
             &self.timestamp,
@@ -41,9 +41,6 @@ impl Ballot {
         }
     }
 
-    /* pub fn add_hash(&mut self, voted_candidate_id: Vec<u8>) {
-        self.has
-    } */
     pub fn vote (&mut self, voted_candidate_id: u32) {
         for nonce_attempt in 0..(u64::max_value()) {
             self.nonce = nonce_attempt;

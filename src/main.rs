@@ -1,30 +1,25 @@
 extern crate timer;
 
 use async_std::task;
-use ballotchainlib::*;
+use ballotchainlib::{Candidate, ballotchain::Ballotchain, candidates::Candidates};
 
 fn main() {
-    //Have to create a voterId here and change it if necessary after connecting with other nodes
-    //building ui
-    // //difficulty of hash
-    /* let difficulty = 0x000fffffffffffffffffffffffffffff;
-
-    let mut genesis_block = Ballot::new(0, now(), vec![0; 32], 0, 362, difficulty);
-
-    genesis_block.vote(0);
-
-    println!("Voted(mined) genesis ballot {:?}", &genesis_block);
-
-    
-
-    let mut last_hash: Vec<u8> = genesis_block.hash.clone();
-    
-    ballotchain
-        .update_with_block(genesis_block)
-        .expect("Failed to add genesis ballot");
- */
+    //Creating ballotchain(blockhain)
     let mut ballotchain = Ballotchain::new();
+
+    //Creating a candidate list to hold all candidates
+    let mut candidatelist: Candidates = Candidates::new();
+
+    let birinci_aday = Candidate::new("Mehmet Seçilenleroğlu".to_string(), 1, 0);
+    
+    let ikinci_aday = Candidate::new("Ahmet Seçilmez".to_string(), 2, 0);
+
+    let ucuncu_aday = Candidate::new("Veli Katılmamış".to_string(), 2, 0);
+
+    candidatelist.add_candidate(birinci_aday);
+    candidatelist.add_candidate(ikinci_aday);
+
     task::block_on(async {
-        Ballotchain::init_network(&mut ballotchain);
+        Ballotchain::init_network(&mut ballotchain, &mut candidatelist);
     });
 }
