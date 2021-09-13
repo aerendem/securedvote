@@ -25,7 +25,6 @@ use std::{
 
 pub enum BlockValidationErr {
     MismatchedIndex,
-    InvalidHash,
     AchronologicalTimestamp,
     MismatchedPreviousHash,
     InvalidGenesisBlockFormat,
@@ -48,8 +47,6 @@ impl Ballotchain {
 
         if ballot.index != i as u32 {
             return Err(BlockValidationErr::MismatchedIndex);
-        /* } else if !ballot::check_difficulty(&ballot.hash(), ballot.difficulty) {
-        return Err(BlockValidationErr::InvalidHash); */
         } else if i != 0 {
             // Not genesis ballot
             let prev_block = &self.ballots[i - 1];
@@ -94,7 +91,6 @@ impl Ballotchain {
 
             // Create a random PeerId
             let local_key = identity::Keypair::generate_ed25519();
-            let duplicate_local_key: identity::Keypair = identity::Keypair::generate_ed25519();
             let local_peer_id = PeerId::from(local_key.public());
             println!("Local peer id: {:?}", local_peer_id);
 
@@ -156,32 +152,6 @@ impl Ballotchain {
                     Ok(to_dial) => match swarm.dial_addr(to_dial) {
                         Ok(_) => {
                             println!("Dialed {:?}", dialing);
-                            let mut entry_message = String::new();
-                            entry_message = "ILK_BAGLANTI".to_string();
-
-                            let message_id_fn = |message: &GossipsubMessage| {
-                                let mut s = DefaultHasher::new();
-                                message.data.hash(&mut s);
-                                MessageId::from(s.finish().to_string())
-                            };
-                            let gossipsub_config = gossipsub::GossipsubConfigBuilder::default()
-                                .heartbeat_interval(Duration::from_secs(10)) // This is set to aid debugging by not cluttering the log space
-                                .validation_mode(ValidationMode::Strict) // This sets the kind of message validation. The default is Strict (enforce message signing)
-                                .message_id_fn(message_id_fn) // content-address messages. No two messages of the
-                                // same content will be propagated.
-                                .build()
-                                .expect("Valid config");
-                            let test_topic = Topic::new("ILK_BAGLANTI-net");
-                            let mut gossipsub: gossipsub::Gossipsub = gossipsub::Gossipsub::new(
-                                MessageAuthenticity::Signed(duplicate_local_key),
-                                gossipsub_config,
-                            )
-                            .expect("Correct configuration");
-                            gossipsub.subscribe(&test_topic).unwrap();
-
-                            swarm
-                                .behaviour_mut()
-                                .publish(topic.clone(), entry_message.as_bytes());
                         }
 
                         Err(e) => println!("Dial {:?} failed: {:?}", dialing, e),
@@ -280,49 +250,11 @@ impl Ballotchain {
                                             }
                                         }
                                         let json = serde_json::to_string(&cloned_ballot)
-                                            .expect("can jsonify request");
+                                            .expect("json serialize islemi yapilabilir");
                                         swarm
                                             .behaviour_mut()
                                             .publish(topic.clone(), json.as_bytes());
                                     }
-                                }
-                                Some("ILK_BAGLANTI_KUR") => {
-
-                                }
-                                Some("ILK_BAGLANTI_BILGI_GONDER") => {
-                                    let message_id_fn = |message: &GossipsubMessage| {
-                                        let mut s = DefaultHasher::new();
-                                        message.data.hash(&mut s);
-                                        MessageId::from(s.finish().to_string())
-                                    };
-                                    let gossipsub_config = gossipsub::GossipsubConfigBuilder::default()
-                                    .heartbeat_interval(Duration::from_secs(10)) // This is set to aid debugging by not cluttering the log space
-                                    .validation_mode(ValidationMode::Strict) // This sets the kind of message validation. The default is Strict (enforce message signing)
-                                    .message_id_fn(message_id_fn) // content-address messages. No two messages of the
-                                    // same content will be propagated.
-                                    .build()
-                                    .expect("Valid config");
-                                    let duplicate_local_key: identity::Keypair = identity::Keypair::generate_ed25519();
-                                    let test_topic = Topic::new("ILK_BAGLANTI-net");
-                                    let mut gossipsub: gossipsub::Gossipsub = gossipsub::Gossipsub::new(
-                                        MessageAuthenticity::Signed(duplicate_local_key),
-                                        gossipsub_config,
-                                    )
-                                    .expect("Correct configuration");
-                                    gossipsub.subscribe(&test_topic).unwrap();
-                                    
-                                    
-
-                                    for ballot in self.ballots.iter() {
-                                        let json = serde_json::to_string(ballot)
-                                        .expect("can jsonify request");
-
-                                        swarm
-                                        .behaviour_mut()
-                                        .publish(test_topic.clone(), json.as_bytes());
-                                    }
-                                    
-                                    
                                 }
                                 None => eprintln!("_"),
                                 _ => {
@@ -330,7 +262,7 @@ impl Ballotchain {
                                 }
                             }
                         }
-                        Poll::Ready(None) => panic!("Input girişi kapatıldı"),
+                        Poll::Ready(None) => panic!("Input girisi kapatildi"),
                         Poll::Pending => break,
                     }
                     {
@@ -348,7 +280,6 @@ impl Ballotchain {
                             }) => {
                                 println!(
                                     "Mesaj alındı: {}, id'ye sahip: {}, istemci tarafından: {:?}",
-                                    //"Got message: {} with id: {} from peer: {:?}",
                                     String::from_utf8_lossy(&message.data),
                                     id,
                                     peer_id
